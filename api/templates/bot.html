@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot simple</title>
+    <script src="https://cdn.tailwindcss.com"></script> 
+    <style>
+        /* Styles CSS pour le chatbot */
+        body {
+            font-family: sans-serif;
+            background-color: #f2f2f2;
+        }
+        .chat-container {
+            width: 400px;
+            margin: 50px auto;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        .chat-header {
+            padding: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+        }
+        .chat-messages {
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 5px;
+            max-width: 80%;
+            clear: both;
+        }
+        .user .message {
+            background-color: #eee;
+            float: left; 
+        }
+        .bot .message {
+            background-color: #007bff;
+            color: #fff;
+            float: right; 
+        }
+        .chat-input {
+            padding: 10px;
+            border-top: 1px solid #ddd;
+        }
+        input[type="text"] {
+            width: calc(100% - 90px);
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>Chatbot</h2>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            </div>
+        <div class="chat-input">
+            <input type="text" id="user-input" placeholder="Tapez votre message...">
+            <button onclick="sendMessage()">Envoyer</button>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+
+        function displayMessage(message, isUser) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.classList.add(isUser ? 'user' : 'bot'); 
+            messageElement.textContent = message;
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight; 
+        }
+
+        async function sendMessage() {
+            const userMessage = userInput.value;
+            if (userMessage.trim() === "") return;
+
+            displayMessage(userMessage, true); // Afficher le message de l'utilisateur
+            userInput.value = ''; // Effacer le champ de saisie
+
+            try {
+                const botReply = await fetch('/chatbot', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: userMessage })
+                })
+                .then(response => {
+                  if (!response.ok) {
+                    throw new Error('Erreur réseau: ' + response.status); 
+                  }
+                  return response.json();
+                })
+                .then(data => data.message)
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    return "Une erreur est survenue lors de la communication avec le serveur.";
+                });
+
+                displayMessage(botReply, false); // Afficher la réponse du bot
+
+            } catch (error) {
+                displayMessage("Une erreur est survenue. Veuillez réessayer.", false);
+            }
+        }
+    </script>
+</body>
+</html>
